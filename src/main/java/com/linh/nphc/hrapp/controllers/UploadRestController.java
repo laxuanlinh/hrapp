@@ -1,6 +1,9 @@
 package com.linh.nphc.hrapp.controllers;
 
+import com.linh.nphc.hrapp.exceptions.DuplicateRowException;
+import com.linh.nphc.hrapp.exceptions.InvalidFieldException;
 import com.linh.nphc.hrapp.exceptions.UnableToReadFileException;
+import com.linh.nphc.hrapp.exceptions.UnableToSaveEmployeeException;
 import com.linh.nphc.hrapp.models.UploadResponse;
 import com.linh.nphc.hrapp.services.EmployeeService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,8 +14,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.util.Map;
 
 @RestController
 public class UploadRestController {
@@ -26,8 +27,10 @@ public class UploadRestController {
         try{
             employeeService.processFile(file);
             return new ResponseEntity<>(new UploadResponse("Data is created"), HttpStatus.CREATED);
-        } catch (UnableToReadFileException ex){
+        } catch (UnableToSaveEmployeeException ex){
             return new ResponseEntity<>(new UploadResponse("File is uploaded but not processed - "+ex.getMessage()), HttpStatus.OK);
+        } catch (UnableToReadFileException | InvalidFieldException | DuplicateRowException ex){
+            return new ResponseEntity<>(new UploadResponse(ex.getMessage()), HttpStatus.BAD_REQUEST);
         }
 
     }
