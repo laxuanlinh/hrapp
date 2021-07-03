@@ -4,6 +4,7 @@ import com.linh.nphc.hrapp.exceptions.DuplicateRowException;
 import com.linh.nphc.hrapp.exceptions.InvalidFieldException;
 import com.linh.nphc.hrapp.exceptions.UnableToReadFileException;
 import com.linh.nphc.hrapp.models.Employee;
+import com.linh.nphc.hrapp.models.OffsetBasedPageRequest;
 import com.linh.nphc.hrapp.repositories.EmployeeRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -11,6 +12,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -19,10 +22,14 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
+import java.util.Objects;
+import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.lenient;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class EmployeeServiceTest {
@@ -73,6 +80,52 @@ public class EmployeeServiceTest {
     public void shouldThrowExceptionWhenWrongSalary() throws URISyntaxException, IOException {
         MultipartFile file = this.getFile("employees_wrongsalary.csv");
         assertThrows(UnableToReadFileException.class, () -> employeeService.processFile(file));
+    }
+
+    @Test
+    public void shouldReturnListOfEmployees(){
+        when(employeeRepository.findEmployeesBySalaryRangeAndNameAndLoginAndID(anyDouble(), anyDouble(), anyString(), anyString(), anyString(), any(Pageable.class))).thenReturn(Arrays.asList(new Employee()));
+        assertEquals(1, employeeService.getEmployees(0.0,
+                4000.0,
+                "id",
+                "login",
+                "name",
+                new OffsetBasedPageRequest(0, 10, Sort.by(Sort.Direction.ASC, "id"))).size());
+    }
+
+    @Test
+    public void shouldThrowExceptionIfNotAbleToQueryEmployees(){
+        when(employeeRepository.findEmployeesBySalaryRangeAndNameAndLoginAndID(anyDouble(), anyDouble(), anyString(), anyString(), anyString(), any(Pageable.class))).thenThrow(new RuntimeException("Unable to query employees"));
+        assertThrows(RuntimeException.class, ()->employeeService.getEmployees(0.0,
+                4000.0,
+                "id",
+                "login",
+                "name",
+                new OffsetBasedPageRequest(0, 10, Sort.by(Sort.Direction.ASC, "id"))));
+    }
+
+    @Test
+    public void shouldReturnEmployee(){
+        when(employeeRepository.findById(anyString())).thenReturn(Optional.of(new Employee("e0002","ronwl","Ron Weasley",19234.50, LocalDate.parse("2001-11-16", DateTimeFormatter.ofPattern("yyyy-MM-dd")))));
+        Employee employee = employeeService.getEmployee("e0002");
+        assertEquals("e0002", employee.getId());
+        assertEquals("ronwl", employee.getLogin());
+        assertEquals("Ron Weasley", employee.getName());
+        assertEquals(19234.50, employee.getSalary());
+        assertEquals("2001-11-16", employee.getStartDate().toString());
+    }
+
+    @Test
+    public void shouldNotReturnNullIfIDNotMatch(){
+        when(employeeRepository.findById(anyString())).thenReturn(Optional.empty());
+        Employee employee = employeeService.getEmployee("e0002");
+        assertNull(employee);
+    }
+
+    @Test
+    public void shouldThrowExceptionIfUnableToQuery(){
+        when(employeeRepository.findById(anyString())).thenThrow(new RuntimeException("Not able to query"));
+        assertThrows(RuntimeException.class, () -> employeeService.getEmployee("e0002"));
     }
 
 }

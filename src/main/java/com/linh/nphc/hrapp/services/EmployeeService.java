@@ -5,6 +5,7 @@ import com.linh.nphc.hrapp.exceptions.InvalidFieldException;
 import com.linh.nphc.hrapp.exceptions.UnableToReadFileException;
 import com.linh.nphc.hrapp.exceptions.UnableToSaveEmployeeException;
 import com.linh.nphc.hrapp.models.Employee;
+import com.linh.nphc.hrapp.models.EmployeeDTO;
 import com.linh.nphc.hrapp.repositories.EmployeeRepository;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
@@ -14,6 +15,7 @@ import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -30,6 +32,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 @Service
@@ -98,7 +101,7 @@ public class EmployeeService {
         Validator validator = factory.getValidator();
         Set<ConstraintViolation<Employee>> violations = validator.validate(employee);
         for (ConstraintViolation<Employee> violation : violations) {
-            throw new InvalidFieldException(String.format("Unable to process employee %s - %s", employee.toString(), violation.getMessage()));
+            throw new InvalidFieldException(violation.getMessage());
         }
     }
 
@@ -112,4 +115,60 @@ public class EmployeeService {
         }
     }
 
+    public List<Employee> getEmployees(Double minSalary, Double maxSalary, String id, String login, String name, Pageable pageable){
+        return this.employeeRepository.findEmployeesBySalaryRangeAndNameAndLoginAndID(minSalary, maxSalary, id, login, name, pageable);
+    }
+
+    public Employee getEmployee(String id){
+        return this.employeeRepository.findById(id).orElse(null);
+    }
+
+    public void createEmployee(EmployeeDTO employeeDTO){
+        Employee employee = this.getEmployee(employeeDTO);
+        this.validateEmployee(employee);
+        if (this.employeeRepository.findById(employee.getId()).isPresent()){
+            throw new InvalidFieldException("Employee ID already exists");
+        }
+        if (this.employeeRepository.findByLogin(employee.getLogin()).isPresent()){
+            throw new InvalidFieldException("Employee login not unique");
+        }
+        this.saveEmployee(employee);
+    }
+
+    private Employee getEmployee(EmployeeDTO employeeDTO){
+        try{
+            LocalDate startDate = LocalDate.parse(employeeDTO.getStartDate(), DateTimeFormatter.ofPattern(DATE_FORMAT));
+            return new Employee(employeeDTO.getId(), employeeDTO.getLogin(), employeeDTO.getName(), employeeDTO.getSalary(), startDate);
+        } catch (DateTimeParseException ex){
+            throw new UnableToReadFileException("Invalid date");
+        }
+
+    }
+
+    public void updateEmployee(EmployeeDTO employeeDTO) {
+        Employee employee = this.getEmployee(employeeDTO);
+        this.validateEmployee(employee);
+        Employee existingEmployee = this.employeeRepository.findById(employee.getId()).orElseThrow(() -> new InvalidFieldException("No such employee"));
+        Optional<Employee> existingEmployeeByLogin = this.employeeRepository.findByLogin(employee.getLogin());
+        if (this.loginAlreadyExists(existingEmployee, existingEmployeeByLogin)){
+            throw new InvalidFieldException("Employee login not unique");
+        }
+        this.saveEmployee(employee);
+    }
+
+    private boolean loginAlreadyExists(Employee existingEmployee, Optional<Employee> existingEmployeeByLogin){
+        return existingEmployeeByLogin.isPresent() && !existingEmployee.getId().equals(existingEmployeeByLogin.get().getId());
+    }
 }
+
+
+
+
+
+
+
+
+
+
+
+

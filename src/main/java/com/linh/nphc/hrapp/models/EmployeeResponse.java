@@ -3,10 +3,12 @@ package com.linh.nphc.hrapp.models;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+import java.util.List;
+
 @AllArgsConstructor
 @Getter
-public class UploadResponse {
+public class EmployeeResponse {
 
-    private String message;
+    private List<Employee> result;
 
 }

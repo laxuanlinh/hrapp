@@ -4,7 +4,7 @@ import com.linh.nphc.hrapp.exceptions.DuplicateRowException;
 import com.linh.nphc.hrapp.exceptions.InvalidFieldException;
 import com.linh.nphc.hrapp.exceptions.UnableToReadFileException;
 import com.linh.nphc.hrapp.exceptions.UnableToSaveEmployeeException;
-import com.linh.nphc.hrapp.models.UploadResponse;
+import com.linh.nphc.hrapp.models.MessageResponse;
 import com.linh.nphc.hrapp.services.EmployeeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -23,14 +23,14 @@ public class UploadRestController {
 
     @PostMapping
     @RequestMapping("/users/upload")
-    public ResponseEntity<UploadResponse> upload(@RequestParam("file") MultipartFile file){
+    public ResponseEntity<MessageResponse> upload(@RequestParam("file") MultipartFile file){
         try{
             employeeService.processFile(file);
-            return new ResponseEntity<>(new UploadResponse("Data is created"), HttpStatus.CREATED);
+            return new ResponseEntity<>(new MessageResponse("Data is created"), HttpStatus.CREATED);
         } catch (UnableToSaveEmployeeException ex){
-            return new ResponseEntity<>(new UploadResponse("File is uploaded but not processed - "+ex.getMessage()), HttpStatus.OK);
+            return new ResponseEntity<>(new MessageResponse("File is uploaded but not processed - "+ex.getMessage()), HttpStatus.OK);
         } catch (UnableToReadFileException | InvalidFieldException | DuplicateRowException ex){
-            return new ResponseEntity<>(new UploadResponse(ex.getMessage()), HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(new MessageResponse(ex.getMessage()), HttpStatus.BAD_REQUEST);
         }
 
     }
