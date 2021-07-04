@@ -1,6 +1,8 @@
 package com.linh.nphc.hrapp.controllers;
 
+import com.linh.nphc.hrapp.exceptions.InvalidFieldException;
 import com.linh.nphc.hrapp.models.Employee;
+import com.linh.nphc.hrapp.models.EmployeeDTO;
 import com.linh.nphc.hrapp.models.EmployeeResponse;
 import com.linh.nphc.hrapp.models.MessageResponse;
 import com.linh.nphc.hrapp.services.EmployeeService;
@@ -205,6 +207,105 @@ class EmployeeRestControllerTest {
         assertEquals("Unable to query employee", ((MessageResponse) Objects.requireNonNull(responseEntity.getBody())).getMessage());
     }
 
+    @Test
+    public void shouldCreateEmployee(){
+        doNothing().when(employeeService).createEmployee(any(EmployeeDTO.class));
+        EmployeeDTO employeeDTO = new EmployeeDTO();
+        employeeDTO.setId("id");
+        employeeDTO.setName("name");
+        employeeDTO.setLogin("login");
+        employeeDTO.setSalary(4000.0);
+        employeeDTO.setStartDate("2011-01-01");
+        ResponseEntity<MessageResponse> responseEntity = employeeRestController.createEmployee(employeeDTO);
+        assertEquals(HttpStatus.CREATED, responseEntity.getStatusCode());
+        assertEquals("Successfully created", Objects.requireNonNull(responseEntity.getBody()).getMessage());
+    }
+
+    @Test
+    public void shouldReturnBadRequestIfEmployeeNull_CreateEmployee(){
+        ResponseEntity<MessageResponse> responseEntity = employeeRestController.createEmployee(null);
+        assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
+        assertEquals("Employee cannot be null", Objects.requireNonNull(responseEntity.getBody()).getMessage());
+
+    }
+
+    @Test
+    public void shouldReturnBadRequestWhenFieldInvalid_CreateEmployee(){
+        doThrow(new InvalidFieldException("Field is not valid")).when(employeeService).createEmployee(any(EmployeeDTO.class));
+        EmployeeDTO employeeDTO = new EmployeeDTO();
+        employeeDTO.setId("id");
+        employeeDTO.setName("name");
+        employeeDTO.setLogin("login");
+        employeeDTO.setSalary(4000.0);
+        employeeDTO.setStartDate("2011-01-01");
+        ResponseEntity<MessageResponse> responseEntity = employeeRestController.createEmployee(employeeDTO);
+        assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
+        assertEquals("Field is not valid", Objects.requireNonNull(responseEntity.getBody()).getMessage());
+    }
+
+    @Test
+    public void shouldReturnInternalErrorWhenUnexpectedError_CreateEmployee(){
+        doThrow(new RuntimeException("Unable to create employee")).when(employeeService).createEmployee(any(EmployeeDTO.class));
+        EmployeeDTO employeeDTO = new EmployeeDTO();
+        employeeDTO.setId("id");
+        employeeDTO.setName("name");
+        employeeDTO.setLogin("login");
+        employeeDTO.setSalary(4000.0);
+        employeeDTO.setStartDate("2011-01-01");
+        ResponseEntity<MessageResponse> responseEntity = employeeRestController.createEmployee(employeeDTO);
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, responseEntity.getStatusCode());
+        assertEquals("Unable to create employee", Objects.requireNonNull(responseEntity.getBody()).getMessage());
+    }
+
+    @Test
+    public void shouldUpdateEmployee(){
+        doNothing().when(employeeService).updateEmployee(any(EmployeeDTO.class));
+        EmployeeDTO employeeDTO = new EmployeeDTO();
+        employeeDTO.setId("id");
+        employeeDTO.setName("name");
+        employeeDTO.setLogin("login");
+        employeeDTO.setSalary(4000.0);
+        employeeDTO.setStartDate("2011-01-01");
+        ResponseEntity<MessageResponse> responseEntity = employeeRestController.updateEmployee(employeeDTO);
+        assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+        assertEquals("Successfully updated", Objects.requireNonNull(responseEntity.getBody()).getMessage());
+    }
+
+    @Test
+    public void shouldReturnBadRequestIfEmployeeNull_UpdateEmployee(){
+        ResponseEntity<MessageResponse> responseEntity = employeeRestController.updateEmployee(null);
+        assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
+        assertEquals("Employee cannot be null", Objects.requireNonNull(responseEntity.getBody()).getMessage());
+
+    }
+
+    @Test
+    public void shouldReturnBadRequestWhenFieldInvalid_UpdateEmployee(){
+        doThrow(new InvalidFieldException("Employee ID already exists")).when(employeeService).updateEmployee(any(EmployeeDTO.class));
+        EmployeeDTO employeeDTO = new EmployeeDTO();
+        employeeDTO.setId("id");
+        employeeDTO.setName("name");
+        employeeDTO.setLogin("login");
+        employeeDTO.setSalary(4000.0);
+        employeeDTO.setStartDate("2011-01-01");
+        ResponseEntity<MessageResponse> responseEntity = employeeRestController.updateEmployee(employeeDTO);
+        assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
+        assertEquals("Employee ID already exists", Objects.requireNonNull(responseEntity.getBody()).getMessage());
+    }
+
+    @Test
+    public void shouldReturnInternalErrorWhenUnexpectedError_UpdateEmployee(){
+        doThrow(new RuntimeException("Unable to update employee")).when(employeeService).updateEmployee(any(EmployeeDTO.class));
+        EmployeeDTO employeeDTO = new EmployeeDTO();
+        employeeDTO.setId("id");
+        employeeDTO.setName("name");
+        employeeDTO.setLogin("login");
+        employeeDTO.setSalary(4000.0);
+        employeeDTO.setStartDate("2011-01-01");
+        ResponseEntity<MessageResponse> responseEntity = employeeRestController.updateEmployee(employeeDTO);
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, responseEntity.getStatusCode());
+        assertEquals("Unable to update employee", Objects.requireNonNull(responseEntity.getBody()).getMessage());
+    }
 
 
 }

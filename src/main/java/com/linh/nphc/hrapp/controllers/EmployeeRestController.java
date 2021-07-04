@@ -3,8 +3,6 @@ package com.linh.nphc.hrapp.controllers;
 import com.linh.nphc.hrapp.exceptions.InvalidFieldException;
 import com.linh.nphc.hrapp.models.*;
 import com.linh.nphc.hrapp.services.EmployeeService;
-import org.apache.coyote.Response;
-import org.aspectj.bridge.Message;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -127,7 +125,7 @@ public class EmployeeRestController {
                 return new ResponseEntity<>(new MessageResponse("Employee cannot be null"), HttpStatus.BAD_REQUEST);
             }
             employeeService.updateEmployee(employee);
-            return new ResponseEntity<>(new MessageResponse("Successfully updated"), HttpStatus.CREATED);
+            return new ResponseEntity<>(new MessageResponse("Successfully updated"), HttpStatus.OK);
         } catch (InvalidFieldException e){
             return new ResponseEntity<>(new MessageResponse(e.getMessage()), HttpStatus.BAD_REQUEST);
         } catch (Exception e){

@@ -30,10 +30,7 @@ import java.io.Reader;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 @Service
 @Log4j2
@@ -44,7 +41,6 @@ public class EmployeeService {
     private final static int COLUMN_NAME = 2;
     private final static int COLUMN_SALARY = 3;
     private final static int COLUMN_START_DATE = 4;
-    private final static String DATE_FORMAT = "yyyy-MM-dd";
 
     @Autowired
     private EmployeeRepository employeeRepository;
@@ -85,15 +81,24 @@ public class EmployeeService {
             String id = StringUtils.isBlank(row[COLUMN_ID]) ? null : row[COLUMN_ID];
             String login = StringUtils.isBlank(row[COLUMN_LOGIN]) ? null : row[COLUMN_LOGIN];
             String name = StringUtils.isBlank(row[COLUMN_NAME]) ? null : row[COLUMN_NAME];
-            LocalDate startDate = LocalDate.parse(row[COLUMN_START_DATE], DateTimeFormatter.ofPattern(DATE_FORMAT));
+            LocalDate startDate = this.parseDate(row[COLUMN_START_DATE]);
             Double salary = StringUtils.isBlank(row[COLUMN_SALARY]) ? null : Double.valueOf(row[COLUMN_SALARY]);
 
             return new Employee(id, login, name, salary, startDate);
-        } catch (DateTimeParseException ex){
-            throw new UnableToReadFileException(String.format("Unable to parse date %s", row[COLUMN_START_DATE]));
         } catch (NumberFormatException ex){
             throw new UnableToReadFileException(String.format("Unable to parse number %s", row[COLUMN_SALARY]));
         }
+    }
+
+    private LocalDate parseDate(String dateStr){
+        String[] dateFormats = {"yyyy-MM-dd", "dd-MMM-yy"};
+        for (String format : dateFormats){
+            try {
+                return LocalDate.parse(dateStr, DateTimeFormatter.ofPattern(format));
+            } catch (DateTimeParseException ignored) {}
+        }
+
+        throw new UnableToReadFileException(String.format("Invalid date %s", dateStr));
     }
 
     private void validateEmployee(Employee employee){
@@ -108,23 +113,24 @@ public class EmployeeService {
     private void saveEmployee(Employee employee){
         try{
             employeeRepository.save(employee);
-        } catch (DataIntegrityViolationException e){
-            throw new UnableToSaveEmployeeException(String.format("Unable to save employee %s due to constraint violation", employee.toString()));
         } catch (Exception e){
             throw new UnableToSaveEmployeeException(String.format("Unable to save employee %s", employee.toString()));
         }
     }
 
+    @Transactional
     public List<Employee> getEmployees(Double minSalary, Double maxSalary, String id, String login, String name, Pageable pageable){
         return this.employeeRepository.findEmployeesBySalaryRangeAndNameAndLoginAndID(minSalary, maxSalary, id, login, name, pageable);
     }
 
+    @Transactional
     public Employee getEmployee(String id){
         return this.employeeRepository.findById(id).orElse(null);
     }
 
+    @Transactional
     public void createEmployee(EmployeeDTO employeeDTO){
-        Employee employee = this.getEmployee(employeeDTO);
+        Employee employee = new Employee(employeeDTO.getId(), employeeDTO.getLogin(), employeeDTO.getName(), employeeDTO.getSalary(), this.parseDate(employeeDTO.getStartDate()));
         this.validateEmployee(employee);
         if (this.employeeRepository.findById(employee.getId()).isPresent()){
             throw new InvalidFieldException("Employee ID already exists");
@@ -135,18 +141,9 @@ public class EmployeeService {
         this.saveEmployee(employee);
     }
 
-    private Employee getEmployee(EmployeeDTO employeeDTO){
-        try{
-            LocalDate startDate = LocalDate.parse(employeeDTO.getStartDate(), DateTimeFormatter.ofPattern(DATE_FORMAT));
-            return new Employee(employeeDTO.getId(), employeeDTO.getLogin(), employeeDTO.getName(), employeeDTO.getSalary(), startDate);
-        } catch (DateTimeParseException ex){
-            throw new UnableToReadFileException("Invalid date");
-        }
-
-    }
-
+    @Transactional
     public void updateEmployee(EmployeeDTO employeeDTO) {
-        Employee employee = this.getEmployee(employeeDTO);
+        Employee employee = new Employee(employeeDTO.getId(), employeeDTO.getLogin(), employeeDTO.getName(), employeeDTO.getSalary(), this.parseDate(employeeDTO.getStartDate()));
         this.validateEmployee(employee);
         Employee existingEmployee = this.employeeRepository.findById(employee.getId()).orElseThrow(() -> new InvalidFieldException("No such employee"));
         Optional<Employee> existingEmployeeByLogin = this.employeeRepository.findByLogin(employee.getLogin());

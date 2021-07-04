@@ -7,6 +7,7 @@ import com.linh.nphc.hrapp.exceptions.UnableToSaveEmployeeException;
 import com.linh.nphc.hrapp.models.MessageResponse;
 import com.linh.nphc.hrapp.services.EmployeeService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -27,7 +28,7 @@ public class UploadRestController {
         try{
             employeeService.processFile(file);
             return new ResponseEntity<>(new MessageResponse("Data is created"), HttpStatus.CREATED);
-        } catch (UnableToSaveEmployeeException ex){
+        } catch (UnableToSaveEmployeeException | DataIntegrityViolationException ex){
             return new ResponseEntity<>(new MessageResponse("File is uploaded but not processed - "+ex.getMessage()), HttpStatus.OK);
         } catch (UnableToReadFileException | InvalidFieldException | DuplicateRowException ex){
             return new ResponseEntity<>(new MessageResponse(ex.getMessage()), HttpStatus.BAD_REQUEST);

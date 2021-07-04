@@ -16,8 +16,8 @@ public class OffsetBasedPageRequest implements Pageable, Serializable {
 
     private static final long serialVersionUID = -25822477129613575L;
 
-    private int limit;
-    private long offset;
+    private final int limit;
+    private final long offset;
     private final Sort sort;
 
     /**
@@ -38,28 +38,6 @@ public class OffsetBasedPageRequest implements Pageable, Serializable {
         this.limit = limit;
         this.offset = offset;
         this.sort = sort;
-    }
-
-    /**
-     * Creates a new {@link OffsetBasedPageRequest} with sort parameters applied.
-     *
-     * @param offset     zero-based offset.
-     * @param limit      the size of the elements to be returned.
-     * @param direction  the direction of the {@link Sort} to be specified, can be {@literal null}.
-     * @param properties the properties to sort by, must not be {@literal null} or empty.
-     */
-    public OffsetBasedPageRequest(long offset, int limit, Sort.Direction direction, String... properties) {
-        this((int) offset, limit, Sort.by(direction, properties));
-    }
-
-    /**
-     * Creates a new {@link OffsetBasedPageRequest} with sort parameters applied.
-     *
-     * @param offset zero-based offset.
-     * @param limit  the size of the elements to be returned.
-     */
-    public OffsetBasedPageRequest(int offset, int limit) {
-        this(offset, limit, Sort.unsorted());
     }
 
     @Override
