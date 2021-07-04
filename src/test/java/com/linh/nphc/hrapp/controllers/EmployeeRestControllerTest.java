@@ -307,5 +307,35 @@ class EmployeeRestControllerTest {
         assertEquals("Unable to update employee", Objects.requireNonNull(responseEntity.getBody()).getMessage());
     }
 
+    @Test
+    public void shouldDeleteEmployee(){
+        doNothing().when(employeeService).deleteEmployee(anyString());
+        ResponseEntity<MessageResponse> responseEntity = employeeRestController.deleteEmployee("e0002");
+        assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+        assertEquals("Successfully deleted", Objects.requireNonNull(responseEntity.getBody()).getMessage());
+    }
+
+    @Test
+    public void shouldNotDeleteEmployeeWhenIDNull(){
+        ResponseEntity<MessageResponse> responseEntity = employeeRestController.deleteEmployee(null);
+        assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
+        assertEquals("ID cannot be null", Objects.requireNonNull(responseEntity.getBody()).getMessage());
+    }
+
+    @Test
+    public void shouldNotDeleteEmployeeWhenIDNotMatch(){
+        doThrow(new InvalidFieldException("No such employee")).when(employeeService).deleteEmployee(anyString());
+        ResponseEntity<MessageResponse> responseEntity = employeeRestController.deleteEmployee("e0002");
+        assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
+        assertEquals("No such employee", Objects.requireNonNull(responseEntity.getBody()).getMessage());
+    }
+
+    @Test
+    public void shouldReturnInternalErrorWhenUnexpectedError(){
+        doThrow(new RuntimeException("Some error")).when(employeeService).deleteEmployee(anyString());
+        ResponseEntity<MessageResponse> responseEntity = employeeRestController.deleteEmployee("e0002");
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, responseEntity.getStatusCode());
+        assertEquals("Some error", Objects.requireNonNull(responseEntity.getBody()).getMessage());
+    }
 
 }

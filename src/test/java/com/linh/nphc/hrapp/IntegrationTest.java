@@ -254,6 +254,31 @@ public class IntegrationTest {
                 "}").contentType(MediaType.APPLICATION_JSON).accept(MediaType.APPLICATION_JSON)).andExpect(status().isBadRequest());
     }
 
+    @Test
+    public void shouldDeleteEmployee() throws Exception {
+        Employee employee1 = new Employee("emp0001",
+                "ronwl",
+                "Ron Weasley",
+                19234.50,
+                LocalDate.parse("2001-11-16", DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+        employeeRepository.save(employee1);
+
+        mockMvc.perform(delete("/users/emp0001")).andExpect(status().isOk());
+        assertEquals(0, employeeRepository.findAll().size());
+    }
+
+    @Test
+    public void shouldNotDeleteEmployeeIfNotExist() throws Exception {
+        Employee employee1 = new Employee("emp0001",
+                "ronwl",
+                "Ron Weasley",
+                19234.50,
+                LocalDate.parse("2001-11-16", DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+        employeeRepository.save(employee1);
+
+        mockMvc.perform(delete("/users/emp0002")).andExpect(status().isBadRequest());
+    }
+
 
 
 }

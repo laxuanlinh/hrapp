@@ -3,6 +3,7 @@ package com.linh.nphc.hrapp.controllers;
 import com.linh.nphc.hrapp.exceptions.InvalidFieldException;
 import com.linh.nphc.hrapp.models.*;
 import com.linh.nphc.hrapp.services.EmployeeService;
+import org.aspectj.bridge.Message;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -126,6 +127,21 @@ public class EmployeeRestController {
             }
             employeeService.updateEmployee(employee);
             return new ResponseEntity<>(new MessageResponse("Successfully updated"), HttpStatus.OK);
+        } catch (InvalidFieldException e){
+            return new ResponseEntity<>(new MessageResponse(e.getMessage()), HttpStatus.BAD_REQUEST);
+        } catch (Exception e){
+            return new ResponseEntity<>(new MessageResponse(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @DeleteMapping(value = "/users/{id}")
+    public ResponseEntity<MessageResponse> deleteEmployee(@PathVariable("id") String id){
+        try{
+            if (id == null){
+                return new ResponseEntity<>(new MessageResponse("ID cannot be null"), HttpStatus.BAD_REQUEST);
+            }
+            employeeService.deleteEmployee(id);
+            return new ResponseEntity<>(new MessageResponse("Successfully deleted"), HttpStatus.OK);
         } catch (InvalidFieldException e){
             return new ResponseEntity<>(new MessageResponse(e.getMessage()), HttpStatus.BAD_REQUEST);
         } catch (Exception e){

@@ -202,6 +202,19 @@ public class EmployeeServiceTest {
         assertThrows(InvalidFieldException.class, ()->employeeService.updateEmployee(employeeDTO));
     }
 
+    @Test
+    public void shouldDeleteEmployee(){
+        when(employeeRepository.findById(anyString())).thenReturn(Optional.of(new Employee("e0002","ronwl","Ron Weasley",19234.50, LocalDate.parse("2001-11-16", DateTimeFormatter.ofPattern("yyyy-MM-dd")))));
+        doNothing().when(employeeRepository).delete(any(Employee.class));
+        employeeService.deleteEmployee("e0002");
+    }
+
+    @Test
+    public void shouldNotDeleteEmployeeIfNotExist(){
+        when(employeeRepository.findById(anyString())).thenReturn(Optional.empty());
+        assertThrows(InvalidFieldException.class, ()->employeeService.deleteEmployee("e0002"));
+    }
+
 }
 
 

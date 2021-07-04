@@ -156,6 +156,11 @@ public class EmployeeService {
     private boolean loginAlreadyExists(Employee existingEmployee, Optional<Employee> existingEmployeeByLogin){
         return existingEmployeeByLogin.isPresent() && !existingEmployee.getId().equals(existingEmployeeByLogin.get().getId());
     }
+
+    public void deleteEmployee(String id) {
+        Employee employee = this.employeeRepository.findById(id).orElseThrow(()->new InvalidFieldException("No such employee"));
+        employeeRepository.delete(employee);
+    }
 }
 
 
